@@ -13,6 +13,8 @@ public class GuestCommInfo implements Serializable
 	private String email;
 	private String phno;
 	private Long resID;
+	private Long guestID;
+	private String action;
 	
 	public GuestCommInfo()
 	{
@@ -50,5 +52,20 @@ public class GuestCommInfo implements Serializable
 	{
 		this.resID = resID;
 	}
-	
+	public Long getGuestID()
+	{
+		return guestID;
+	}
+	public void setGuestID(Long guestID)
+	{
+		this.guestID = guestID;
+	}
+	public String getAction()
+	{
+		return action;
+	}
+	public void setAction(String action)
+	{
+		this.action = action;
+	}
 }

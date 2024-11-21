@@ -68,6 +68,15 @@ public class ReservationController {
 			if (null != guestCommInfo && null!=guestCommInfo.getEmail())
 			{
 				guestCommInfo.setResID(saveReservationData.getResID());
+				guestCommInfo.setGuestID(saveReservationData.getGuestID());
+				if(StringConstants.RES.equals(saveReservationData.getStatus()))
+				{
+					guestCommInfo.setAction(StringConstants.RESCREATE);
+				}
+				else if(StringConstants.REG.equals(saveReservationData.getStatus()))
+				{
+					guestCommInfo.setAction(StringConstants.MODIFYRES);
+				}
 				producerService.publish(guestCommInfo);
 			}
 		}

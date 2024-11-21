@@ -1,5 +1,7 @@
 package com.sovon9.Reservation_service.service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,6 +53,11 @@ public class ReservationService {
 
 	public List<ReservationVO> fetchReservationDataByStatus(String status)
 	{
+		if(status.equals("ALL"))
+		{
+			List<ReservationVO> reservations=repository.findByStatusForToday(LocalDate.now(), LocalDate.now());
+			return reservations;
+		}
 		return repository.findByStatus(status);
 	}
 

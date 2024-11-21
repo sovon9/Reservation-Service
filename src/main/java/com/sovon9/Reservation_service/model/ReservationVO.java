@@ -26,17 +26,17 @@ public class ReservationVO implements Serializable{
 	private Long pmsID;
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	@Column
+	@Column(nullable = false)
 	private Long resID;
-	@Column
+	@Column(nullable = false)
 	private Long guestID;
-	@Column
+	@Column(nullable = false)
 	private String firstName;
 	@Column
 	private String lastName;
-	@Column
+	@Column(nullable = false)
 	private LocalDate createDate;
-	@Column
+	@Column(nullable = false)
 	private String status;
 	@Column
 	private LocalDate arriveDate;
@@ -48,6 +48,10 @@ public class ReservationVO implements Serializable{
 	private LocalTime deptTime;
 	@Column
 	private String paymentType;
+	@Column
+	private String cardNumber;
+	@Column
+	private String ratePlan;
 	@Column
 	private Integer roomnum;
 	public ReservationVO() {
@@ -141,6 +145,22 @@ public class ReservationVO implements Serializable{
 	}
 	public void setPaymentType(String paymentType) {
 		this.paymentType = paymentType;
+	}
+	public String getCardNumber()
+	{
+		return cardNumber;
+	}
+	public void setCardNumber(String cardNumber)
+	{
+		this.cardNumber = cardNumber;
+	}
+	public String getRatePlan()
+	{
+		return ratePlan;
+	}
+	public void setRatePlan(String ratePlan)
+	{
+		this.ratePlan = ratePlan;
 	}
 	public Integer getRoomnum()
 	{
