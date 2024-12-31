@@ -4,7 +4,6 @@ import java.io.Serializable;
 
 public class GuestCommInfo implements Serializable
 {
-	
 	/**
 	 * 
 	 */
@@ -15,6 +14,7 @@ public class GuestCommInfo implements Serializable
 	private Long resID;
 	private Long guestID;
 	private String action;
+	private int roomNum;
 	
 	public GuestCommInfo()
 	{
@@ -68,4 +68,13 @@ public class GuestCommInfo implements Serializable
 	{
 		this.action = action;
 	}
+	public int getRoomNum()
+	{
+		return roomNum;
+	}
+	public void setRoomNum(int roomNum)
+	{
+		this.roomNum = roomNum;
+	}
+	
 }

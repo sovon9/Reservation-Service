@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name="res")
-public class ReservationVO implements Serializable{
+public class ReservationVO implements Serializable,Cloneable{
 
 	
 	/**
@@ -194,5 +194,11 @@ public class ReservationVO implements Serializable{
 				&& Objects.equals(resID, other.resID) && Objects.equals(roomnum, other.roomnum)
 				&& Objects.equals(status, other.status);
 	}
+	@Override
+	public ReservationVO clone() throws CloneNotSupportedException
+	{
+		return (ReservationVO) super.clone();
+	}
+	
 	
 }

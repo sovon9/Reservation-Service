@@ -1,12 +1,12 @@
 package com.sovon9.Reservation_service.log.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sovon9.Reservation_service.log.ChangeLog;
 import com.sovon9.Reservation_service.log.repository.LogRepository;
 import com.sovon9.Reservation_service.model.ReservationVO;
@@ -17,11 +17,12 @@ public class LogService {
 	@Autowired
 	private LogRepository logRepository;
 
-	public void logChange(ReservationVO newResVO, ReservationVO oldResVO, String userID, String changeType, String desc) throws JsonProcessingException
+	public void logChange(ReservationVO newResVO, Optional<ReservationVO> oldResData, String userID, String changeType, String desc) throws JsonProcessingException
 	{
 	    LocalDateTime logtime = LocalDateTime.now();
-	    if (null != newResVO && null != oldResVO) 
+	    if (null != newResVO && oldResData.isPresent()) 
 		{
+	    	ReservationVO oldResVO = oldResData.get();
 			if (!newResVO.getFirstName().equals(oldResVO.getFirstName()))
 			{
 			    ChangeLog changeLog = new ChangeLog();
@@ -33,6 +34,7 @@ public class LogService {
 				to.append(newResVO.getFirstName());
 				to.append("]");
 				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
 				logRepository.save(changeLog);
 			}
 			
@@ -47,6 +49,7 @@ public class LogService {
 				to.append(newResVO.getLastName());
 				to.append("]");
 				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
 				logRepository.save(changeLog);
 			}
 			
@@ -61,6 +64,7 @@ public class LogService {
 				to.append(newResVO.getCreateDate());
 				to.append("]");
 				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
 				logRepository.save(changeLog);
 			}
 			
@@ -75,6 +79,7 @@ public class LogService {
 				to.append(newResVO.getStatus());
 				to.append("]");
 				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
 				logRepository.save(changeLog);
 			}
 			
@@ -89,6 +94,7 @@ public class LogService {
 				to.append(newResVO.getArriveDate());
 				to.append("]");
 				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
 				logRepository.save(changeLog);
 			}
 			
@@ -103,6 +109,7 @@ public class LogService {
 				to.append(newResVO.getArriveTime());
 				to.append("]");
 				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
 				logRepository.save(changeLog);
 			}
 			
@@ -117,6 +124,7 @@ public class LogService {
 				to.append(newResVO.getDeptDate());
 				to.append("]");
 				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
 				logRepository.save(changeLog);
 			}
 			if (!newResVO.getDeptTime().equals(oldResVO.getDeptTime()))
@@ -130,8 +138,98 @@ public class LogService {
 				to.append(newResVO.getDeptTime());
 				to.append("]");
 				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
 				logRepository.save(changeLog);
 			}
 		}
+	    else if(null != newResVO)
+	    {
+	    	if (null!=newResVO.getFirstName())
+			{
+			    ChangeLog changeLog = new ChangeLog();
+				StringBuilder to = new StringBuilder("FirstName : [");
+				to.append(newResVO.getFirstName());
+				to.append("]");
+				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
+				logRepository.save(changeLog);
+			}
+			
+			if (null!=newResVO.getLastName())
+			{
+			    ChangeLog changeLog = new ChangeLog();
+				StringBuilder to = new StringBuilder("LastName : [");
+				to.append(newResVO.getLastName());
+				to.append("]");
+				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
+				logRepository.save(changeLog);
+			}
+			
+			if (null!=newResVO.getCreateDate())
+			{
+			    ChangeLog changeLog = new ChangeLog();
+				StringBuilder to = new StringBuilder("CreateDate : [");
+				to.append(newResVO.getCreateDate());
+				to.append("]");
+				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
+				logRepository.save(changeLog);
+			}
+			
+			if (null!=newResVO.getStatus())
+			{
+			    ChangeLog changeLog = new ChangeLog();
+				StringBuilder to = new StringBuilder("Status : [");
+				to.append(newResVO.getStatus());
+				to.append("]");
+				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
+				logRepository.save(changeLog);
+			}
+			
+			if (null!=newResVO.getArriveDate())
+			{
+			    ChangeLog changeLog = new ChangeLog();
+				StringBuilder to = new StringBuilder("Arrival Date : [");
+				to.append(newResVO.getArriveDate());
+				to.append("]");
+				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
+				logRepository.save(changeLog);
+			}
+			
+			if (null!=newResVO.getArriveTime())
+			{
+			    ChangeLog changeLog = new ChangeLog();
+				StringBuilder to = new StringBuilder("Arrival Time : [");
+				to.append(newResVO.getArriveTime());
+				to.append("]");
+				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
+				logRepository.save(changeLog);
+			}
+			
+			if (null!=newResVO.getDeptDate())
+			{
+			    ChangeLog changeLog = new ChangeLog();
+				StringBuilder to = new StringBuilder("Departure Date : [");
+				to.append(newResVO.getDeptDate());
+				to.append("]");
+				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
+				logRepository.save(changeLog);
+			}
+			if (null!=newResVO.getDeptTime())
+			{
+			    ChangeLog changeLog = new ChangeLog();
+				StringBuilder to = new StringBuilder("Departure Time : [");
+				to.append(newResVO.getDeptTime());
+				to.append("]");
+				changeLog.setNewValue(to.toString());
+				changeLog.setReservationId(newResVO.getResID());
+				logRepository.save(changeLog);
+			}
+	    }
 	}
 }

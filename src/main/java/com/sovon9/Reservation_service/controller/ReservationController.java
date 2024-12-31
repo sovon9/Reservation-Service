@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.KafkaException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,11 +48,26 @@ public class ReservationController {
 	 * 
 	 * @param resVO
 	 * @return
+	 * @throws CloneNotSupportedException 
 	 */
 	@PostMapping("/reservaion")
-	public ResponseEntity<ReservationVO> saveReservation(@RequestBody ReservationVO resVO)
+	public ResponseEntity<ReservationVO> saveReservation(@RequestBody ReservationVO resVO) throws CloneNotSupportedException
 	{
-		ReservationVO saveReservationData = service.saveReservationData(resVO);
+		ReservationVO saveReservationData = null;
+		if(resVO.getStatus().equals(StringConstants.MOD))
+		{
+			Optional<ReservationVO> resData = service.getResData(resVO.getResID());
+			if(resData.isPresent())
+			{
+				ReservationVO reservationVO = resData.get().clone();
+				resVO = service.updateModifiedFields(resData.get(), resVO);
+				saveReservationData = service.saveReservationData(resVO, reservationVO);
+			}
+		}
+		else
+		{
+			saveReservationData = service.saveReservationData(resVO);
+		}
 		if(null!=saveReservationData && null!=saveReservationData.getRoomnum())
 		{
 			ResponseEntity<RoomDto> roomEntity = roomProxy.upateResRoomStatus(saveReservationData.getResID(),saveReservationData.getRoomnum(), "VB"); // vacant blocked
@@ -73,11 +89,18 @@ public class ReservationController {
 				{
 					guestCommInfo.setAction(StringConstants.RESCREATE);
 				}
-				else if(StringConstants.REG.equals(saveReservationData.getStatus()))
+				else if(StringConstants.MOD.equals(saveReservationData.getStatus()))
 				{
-					guestCommInfo.setAction(StringConstants.MODIFYRES);
+					guestCommInfo.setAction(StringConstants.RESMODIFY);
 				}
-				producerService.publish(guestCommInfo);
+				try
+				{
+					producerService.publish(guestCommInfo);
+				}
+				catch (KafkaException e)
+				{
+					LOGGER.error("Kafka exception: {}", e.getMessage(), e);
+				}
 			}
 		}
 		return new ResponseEntity<ReservationVO>(saveReservationData, HttpStatus.CREATED);
@@ -88,25 +111,53 @@ public class ReservationController {
 	 * @param resVO
 	 * @return
 	 */
-	@PutMapping("/reservaion/checkin")
-	public ResponseEntity<ReservationVO> checkInReservation(@RequestBody ReservationVO resVO)
+	@PutMapping("/reservaion/checkin/resID/{resID}")
+	public ResponseEntity<ReservationVO> checkInReservation(@PathVariable("resID") Long resID)
 	{
-		resVO.setStatus(StringConstants.REG);
-		ReservationVO saveReservationData = service.saveReservationData(resVO);
-		if (null != saveReservationData && null != saveReservationData.getRoomnum())
+		try
 		{
-			ResponseEntity<RoomDto> roomEntity = roomProxy.upateResRoomStatus(saveReservationData.getResID(), saveReservationData.getRoomnum(), "OC");
-			if(!roomEntity.getStatusCode().is2xxSuccessful())
-		    {
-				throw new PMSException("Unable to Check-In Reservation", HttpStatus.BAD_REQUEST.toString());
-		    }
+			Optional<ReservationVO> resData = service.getResData(resID);
+			if(resData.isPresent())
+			{
+				ReservationVO reservationVO = resData.get();
+				reservationVO.setStatus(StringConstants.REG);
+				ReservationVO saveReservationData = service.saveReservationData(reservationVO);
+				if (null != saveReservationData.getRoomnum())
+				{
+					ResponseEntity<RoomDto> roomEntity = roomProxy.upateResRoomStatus(saveReservationData.getResID(),
+							saveReservationData.getRoomnum(), "OC");
+					if (!roomEntity.getStatusCode().is2xxSuccessful())
+					{
+						throw new PMSException(StringConstants.CHECKIN_ERROR, HttpStatus.BAD_REQUEST.toString());
+					}
+					// get guest comm info 
+					if(null != saveReservationData.getGuestID())
+					{
+						GuestCommInfo guestCommInfo = service.getGuestCommInfo(saveReservationData.getGuestID());
+						// send email to guest
+						if (null != guestCommInfo && null!=guestCommInfo.getEmail())
+						{
+							guestCommInfo.setAction(StringConstants.CHECKIN);
+							guestCommInfo.setResID(saveReservationData.getResID());
+							guestCommInfo.setRoomNum(saveReservationData.getRoomnum());
+							producerService.publish(guestCommInfo);
+						}
+					}
+					return ResponseEntity.ok(saveReservationData);
+				}
+				else
+				{
+					throw new PMSException(StringConstants.CHECKIN_ERROR+"Room Number Not Found", HttpStatus.BAD_REQUEST.toString());
+				}
+			}
+			else
+			{
+				throw new PMSException(StringConstants.CHECKIN_ERROR+"Res Data Not Found", HttpStatus.BAD_REQUEST.toString());
+			}
 		}
-		else
-		{
-			throw new PMSException("Unable to Save Reservation Details");
+		catch (Exception e) {
+			throw new PMSException(StringConstants.CHECKIN_ERROR,  HttpStatus.INTERNAL_SERVER_ERROR.toString());
 		}
-		return ResponseEntity.ok(saveReservationData);
-
 	}
 	
 	/**
@@ -114,20 +165,31 @@ public class ReservationController {
 	 * @param resID
 	 * @return null if no res found with resID
 	 */
-	@PutMapping("/reservaion/checkout/{resID}")
+	@PutMapping("/reservaion/checkout/resID/{resID}")
 	public ResponseEntity<ReservationVO> checkOutReservation(@PathVariable("resID") Long resID)
 	{
 		Optional<ReservationVO> resData = service.getResData(resID);
 		if (resData.isPresent()) {
 			ReservationVO resVO = resData.get();
 			resVO.setStatus("CO");
-			roomProxy.upateRoomStatus(resVO.getRoomnum(), "VD");
+			roomProxy.upateRoomStatus(resVO.getRoomnum(), StringConstants.VC);
 			resVO = service.saveReservationData(resVO);
-			return new ResponseEntity<>(resVO, HttpStatus.OK);
+			if(null != resVO.getGuestID())
+			{
+				GuestCommInfo guestCommInfo = service.getGuestCommInfo(resVO.getGuestID());
+				// send email to guest
+				if (null != guestCommInfo && null!=guestCommInfo.getEmail())
+				{
+					guestCommInfo.setAction(StringConstants.CHECKOUT);
+					guestCommInfo.setResID(resVO.getResID());
+					guestCommInfo.setRoomNum(resVO.getRoomnum());
+					producerService.publish(guestCommInfo);
+				}
+			}
+			return new ResponseEntity<ReservationVO>(resVO, HttpStatus.OK);
 		}
 		else
 		{
-			//return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
 			throw new PMSException("Unable to Find Reservation with RESID: "+resID, HttpStatus.NOT_FOUND.toString());
 		}
 	}
